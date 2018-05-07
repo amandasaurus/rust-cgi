@@ -1,0 +1,84 @@
+= rust-cgi
+
+Easily create CGIfootnote:[Retro!]footnote:[Common Gateway Interface 1.1, RFC 3875] programmesfootnote:[Yes, I'm spelling it programme, the correct way.] in Rust based on link:https://github.com/hyperium/http[`http` types].
+
+:toc:
+
+= Installation & Usage
+
+`Cargo.toml`:
+
+[code,toml]
+----
+[dependencies]
+cgi = "*"
+----
+
+In the `main` function, call only `cgi::handle(...)`, with a function that takes a `cgi::Request` and returns `cgi::Response`.
+
+[code,rust]
+----
+extern crate cgi;
+
+fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+    ...
+})}
+----
+
+link:https://en.wikipedia.org/wiki/%22Hello,_World!%22_program[Hello World]:
+
+[code,rust]
+----
+extern crate cgi;
+
+fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+    cgi::string_response(200, "<html><body><h1>Hello World!</h1></body></html>")
+})}
+----
+
+It will parse & extract the CGI environmental variables, and HTTP request body to create `Request`, and convert your `Response` into the correct format. If this programme is not called as CGI (e.g. missing required environmental variables), it will panic.
+
+== Response Shortcuts
+
+Several shortcuts create shortcuts easily:
+
+`cgi:empty_response(status_code)`:: A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);` to return a link:https://en.wikipedia.org/wiki/HTTP_404[HTTP 404 Not Found].
+`cgi::string_response(status_code, text)`:: Converts `text` to bytes (UTF8), and sends that as the body with that `status_code`, e.g. `return cgi::string_response(200, "Hello World!");` returns a simple plain text response.
+`cgi::binary_response(status_code, blob)`:: Sends  `blob` with that status code.
+
+== Re-exports
+
+`http` is re-exported, (as `cgi::http`).
+
+`cgi::Response`/`Request` are `http::Response<Vec<u8>>`/`Request<Vec<u8>>`.
+
+= Testing
+
+Python provides a simple CGI webserver. The binaries must be in a `cgi-bin` directory.
+
+Run this in your project root directory (i.e. where `Cargo.toml` is), and open link:http://localhost:8000/[].
+
+----
+ln -s ./target/debug/ ./cgi-bin/
+python2 -m CGIHTTPServer
+----
+
+= See also
+
+== Things using this
+
+ * 'Suggestions welcome!'
+
+== CGI Resources
+
+ * link:https://github.com/hyperium/http[hyper's http].
+ * link:https://tools.ietf.org/html/rfc3875[RFC 3875 - The Common Gateway Interface (CGI) v1.1]
+
+= Why?
+
+CGI is old, and easy to deploy. Just drop a binary in the right place, and Apache (or whatever) will serve it up. Rust is fast, so for simple things, there should be less downsides to spinning up a custom HTTP server.
+
+= Copyright
+
+Copyright GNU Affero GPL v3 (or later).
+

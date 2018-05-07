@@ -1,0 +1,11 @@
+[package]
+name = "cgi"
+version = "0.1.0"
+authors = ["Rory McCann <rory@technomancy.org>"]
+license = "AGPL-3.0"
+repository = "https://github.com/rory/rust-cgi"
+description = "Create CGI programmes"
+keywords = ["http", "cgi", "web"]
+
+[dependencies]
+http = "0.1"
