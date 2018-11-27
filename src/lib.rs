@@ -1,5 +1,3 @@
-extern crate cgi;
-
 use std::io::{Read, Write, stdin};
 use std::collections::HashMap;
 
