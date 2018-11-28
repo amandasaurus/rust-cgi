@@ -32,6 +32,19 @@ pub fn empty_response<T>(status_code: T) -> Response
     http::response::Builder::new().status(status_code).body(vec![]).unwrap()
 }
 
+pub fn html_response<T, S>(status_code: T, body: S) -> Response
+    where http::StatusCode: http::HttpTryFrom<T>,
+          S: Into<String>
+{
+    let body: Vec<u8> = body.into().into_bytes();
+    http::response::Builder::new()
+        .status(status_code)
+        .header(http::header::CONTENT_TYPE, "text/html")
+        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .body(body)
+        .unwrap()
+}
+
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
