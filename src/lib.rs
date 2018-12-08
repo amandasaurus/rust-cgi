@@ -1,11 +1,52 @@
+//! Easily create CGI (RFC 3875) programmes in Rust based on [`http`](https://github.com/hyperium/http)
+//! 
+//! # Installation & Usage
+//! 
+//! `Cargo.toml`:
+//! 
+//!     [dependencies]
+//!     cgi = "0.1"
+//! 
+//! In the `main` function, call only `cgi::handle(...)`, with a function that
+//! takes a `cgi::Request` and returns `cgi::Response`.
+//! 
+//!     extern crate cgi;
+//!     
+//!     fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+//!          ...
+//!     })}
+//! 
+//! [Hello World](https://en.wikipedia.org/wiki/%22Hello,_World!%22_program):
+//! 
+//!     extern crate cgi;
+//!     
+//!     fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+//!         cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
+//!     })}
+//! 
+//! It will parse & extract the CGI environmental variables, and HTTP request body
+//! to create `Request`, and convert your `Response` into the correct format and
+//! print to stdout. If this programme is not called as CGI (e.g. missing required
+//! environmental variables), it will panic.
+
+
 use std::io::{Read, Write, stdin};
 use std::collections::HashMap;
 
 pub extern crate http;
 
+/// A `Vec<u8>` Request from http
 pub type Request = http::Request<Vec<u8>>;
+
+/// A `Vec<u8>` Response from http
 pub type Response = http::Response<Vec<u8>>;
 
+/// Call F as a CGI programme.
+///
+/// Parse & extract the CGI environmental variables, and HTTP request body
+/// to create `Request`, and convert your `Response` into the correct format and
+/// print to stdout. If this programme is not called as CGI (e.g. missing required
+/// environmental variables), it will panic.
 pub fn handle<F>(func: F) 
     where F: Fn(Request) -> Response
 {
@@ -26,12 +67,16 @@ pub fn handle<F>(func: F)
     std::io::stdout().write_all(&output).unwrap();
 }
 
+/// A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);`
+/// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
     where http::StatusCode: http::HttpTryFrom<T>
 {
     http::response::Builder::new().status(status_code).body(vec![]).unwrap()
 }
 
+/// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
+/// `Content-Type` header.
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
@@ -45,6 +90,7 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
+/// Returns a simple plain text response.
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
@@ -57,6 +103,7 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
+/// Sends  `blob` with that status code.
 pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
     where http::StatusCode: http::HttpTryFrom<T>
 {
