@@ -1,0 +1,4 @@
+= Unrelased
+
+ * Add `html_response` shortcut to return HTML content
+

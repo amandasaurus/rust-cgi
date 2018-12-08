@@ -13,7 +13,7 @@ Rust based on link:https://github.com/hyperium/http[`http` types].
 [code,toml]
 ----
 [dependencies]
-cgi = "*"
+cgi = "0.1"
 ----
 
 In the `main` function, call only `cgi::handle(...)`, with a function that
@@ -35,7 +35,7 @@ link:https://en.wikipedia.org/wiki/%22Hello,_World!%22_program[Hello World]:
 extern crate cgi;
 
 fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-    cgi::string_response(200, "<html><body><h1>Hello World!</h1></body></html>")
+    cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
 })}
 ----
 
@@ -51,6 +51,8 @@ Several shortcuts create shortcuts easily:
 `cgi:empty_response(status_code)`:: A HTTP Reponse with no body and that HTTP
 status code, e.g. `return cgi::empty_response(404);` to return a
 link:https://en.wikipedia.org/wiki/HTTP_404[HTTP 404 Not Found].
+`cgi::html_response(status_code, text)`:: Converts `text` to bytes (UTF8) and
+sends that as the body with that `status_code` and HTML `Content-Type` header.
 `cgi::string_response(status_code, text)`:: Converts `text` to bytes (UTF8),
 and sends that as the body with that `status_code`, e.g. `return
 cgi::string_response(200, "Hello World!");` returns a simple plain text
