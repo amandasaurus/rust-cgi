@@ -1,4 +1,5 @@
 = Unrelased
 
  * Add `html_response` shortcut to return HTML content
+ * Fix typo with `CONTENT_TYPE` env. var.
 
