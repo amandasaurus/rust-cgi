@@ -147,7 +147,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
 
     add_header(&mut req, &env_vars, "AUTH_TYPE", "X-CGI-Auth-Type");
     add_header(&mut req, &env_vars, "CONTENT_LENGTH", "X-CGI-Content-Length");
-    add_header(&mut req, &env_vars, "CONTENT-TYPE", "X-CGI-Content-Type");
+    add_header(&mut req, &env_vars, "CONTENT_TYPE", "X-CGI-Content-Type");
     add_header(&mut req, &env_vars, "GATEWAY_INTERFACE", "X-CGI-Gateway-Interface");
     add_header(&mut req, &env_vars, "PATH_INFO", "X-CGI-Path-Info");
     add_header(&mut req, &env_vars, "PATH_TRANSLATED", "X-CGI-Path-Translated");
