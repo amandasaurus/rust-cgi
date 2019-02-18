@@ -4,6 +4,9 @@ Easily create CGIfootnote:[Retro!]footnote:[Common Gateway Interface 1.1, RFC
 3875] programmesfootnote:[Yes, I'm spelling it programme, the correct way.] in
 Rust based on link:https://github.com/hyperium/http[`http` types].
 
+image::https://img.shields.io/crates/v/cgi.svg?style=flat[crates.io released version badge]
+image::https://img.shields.io/crates/l/cgi.svg?style=flat[crates.io released licencegpl]
+
 :toc:
 
 = Installation & Usage
