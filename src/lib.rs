@@ -217,7 +217,7 @@ fn serialize_response(response: Response) -> Vec<u8> {
 mod tests {
     use super::*;
 
-    fn env(input: Vec<(&str, &str)>) -> Vec<(String, String)> {
+    fn env(input: Vec<(&str, &str)>) -> HashMap<String, String> {
         input.into_iter().map(|(a, b)| (a.to_owned(), b.to_owned())).collect()
     }
 
