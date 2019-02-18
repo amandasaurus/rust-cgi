@@ -4,25 +4,31 @@
 //! 
 //! `Cargo.toml`:
 //! 
-//!     [dependencies]
-//!     cgi = "0.1"
+//! ```cargo,ignore
+//! [dependencies]
+//! cgi = "0.1"
+//! ```
 //! 
 //! In the `main` function, call only `cgi::handle(...)`, with a function that
 //! takes a `cgi::Request` and returns `cgi::Response`.
 //! 
-//!     extern crate cgi;
-//!     
-//!     fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-//!          ...
-//!     })}
+//! ```rust,ignore
+//! extern crate cgi;
+//! 
+//! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+//!      // ...
+//! })}
+//! ```
 //! 
 //! [Hello World](https://en.wikipedia.org/wiki/%22Hello,_World!%22_program):
 //! 
-//!     extern crate cgi;
-//!     
-//!     fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-//!         cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
-//!     })}
+//! ```rust,ignore
+//! extern crate cgi;
+//! 
+//! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
+//!     cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
+//! })}
+//! ```
 //! 
 //! It will parse & extract the CGI environmental variables, and HTTP request body
 //! to create `Request`, and convert your `Response` into the correct format and
