@@ -56,9 +56,11 @@ status code, e.g. `return cgi::empty_response(404);` to return a
 link:https://en.wikipedia.org/wiki/HTTP_404[HTTP 404 Not Found].
 `cgi::html_response(status_code, text)`:: Converts `text` to bytes (UTF8) and
 sends that as the body with that `status_code` and HTML `Content-Type` header.
+`cgi::json_response(status_code, text)`:: Converts `text` to bytes (UTF8) and
+sends that as the body with that `status_code` and JSON `Content-Type` header.
 `cgi::string_response(status_code, text)`:: Converts `text` to bytes (UTF8),
 and sends that as the body with that `status_code`, e.g. `return
-cgi::string_response(200, "Hello World!")`:: returns a simple plain text
+`cgi::string_response(200, "Hello World!")`:: returns a simple plain text
 response.
 `cgi::binary_response(status_code, blob)`:: Sends  `blob` with that status code.
 
