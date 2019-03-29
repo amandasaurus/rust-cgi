@@ -96,6 +96,21 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
+/// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and
+/// JSON `Content-Type` header.
+pub fn json_response<T, S>(status_code: T, body: S) -> Response
+    where http::StatusCode: http::HttpTryFrom<T>,
+          S: Into<String>
+{
+    let body: Vec<u8> = body.into().into_bytes();
+    http::response::Builder::new()
+        .status(status_code)
+        .header(http::header::CONTENT_TYPE, "application/json")
+        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .body(body)
+        .unwrap()
+}
+
 /// Returns a simple plain text response.
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
