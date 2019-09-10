@@ -96,13 +96,13 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
-/// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and
+/// Converts `text` to a JSON byte vector and sends that as the body with that `status_code` and
 /// JSON `Content-Type` header.
 pub fn json_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
-          S: Into<String>
+        S: Serialize
 {
-    let body: Vec<u8> = body.into().into_bytes();
+    let body: Vec<u8> = serde_json::to_vec(&body).unwrap();
     http::response::Builder::new()
         .status(status_code)
         .header(http::header::CONTENT_TYPE, "application/json")
