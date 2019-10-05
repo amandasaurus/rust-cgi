@@ -1,5 +1,3 @@
-= Unrelased
+= 0.3.0 (2019-10-05)
 
- * Add `html_response` shortcut to return HTML content
- * Fix typo with `CONTENT_TYPE` env. var.
-
+ * Basic support for HTTP/2
