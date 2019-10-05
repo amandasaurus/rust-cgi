@@ -139,8 +139,9 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
             req.version(http::version::Version::HTTP_10);
         } else if v == "HTTP/1.1" {
             req.version(http::version::Version::HTTP_11);
+        } else if v == "HTTP/2.0" {
+            req.version(http::version::Version::HTTP_2);
         } else {
-            // Do HTTP/2.0?
             unimplemented!("Unsupport HTTP SERVER_PROTOCOL {:?}", v);
         }
     }
