@@ -76,7 +76,7 @@ is), and open link:http://localhost:8000/[].
 
 ----
 ln -s ./target/debug/ ./cgi-bin/
-python2 -m CGIHTTPServer
+python3 -m http.server --cgi
 ----
 
 = See also
