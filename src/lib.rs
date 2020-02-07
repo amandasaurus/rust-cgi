@@ -76,7 +76,8 @@ pub fn handle<F>(func: F)
 /// A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);`
 /// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
-    where http::StatusCode: http::HttpTryFrom<T>
+    where http::StatusCode: std::convert::TryFrom<T>,
+          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>
 {
     http::response::Builder::new().status(status_code).body(vec![]).unwrap()
 }
@@ -84,7 +85,8 @@ pub fn empty_response<T>(status_code: T) -> Response
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
 /// `Content-Type` header.
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: http::HttpTryFrom<T>,
+    where http::StatusCode: std::convert::TryFrom<T>,
+          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
@@ -98,7 +100,8 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
 
 /// Returns a simple plain text response.
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: http::HttpTryFrom<T>,
+    where http::StatusCode: std::convert::TryFrom<T>,
+          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
@@ -111,7 +114,8 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
 
 /// Sends  `blob` with that status code.
 pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
-    where http::StatusCode: http::HttpTryFrom<T>
+    where http::StatusCode: std::convert::TryFrom<T>,
+          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>
 {
     http::response::Builder::new()
         .status(status_code)
@@ -124,59 +128,61 @@ pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
 fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
-    req.method(env_vars["REQUEST_METHOD"].as_str());
+    req = req.method(env_vars["REQUEST_METHOD"].as_str());
     let uri = if env_vars.get("QUERY_STRING").unwrap_or(&"".to_owned()) != "" {
         format!("{}?{}", env_vars["SCRIPT_NAME"], env_vars["QUERY_STRING"])
     } else {
         env_vars["SCRIPT_NAME"].to_owned()
     };
-    req.uri(uri.as_str());
+    req = req.uri(uri.as_str());
 
     if let Some(v) = env_vars.get("SERVER_PROTOCOL") {
         if v == "HTTP/0.9" {
-            req.version(http::version::Version::HTTP_09);
+            req = req.version(http::version::Version::HTTP_09);
         } else if v == "HTTP/1.0" {
-            req.version(http::version::Version::HTTP_10);
+            req = req.version(http::version::Version::HTTP_10);
         } else if v == "HTTP/1.1" {
-            req.version(http::version::Version::HTTP_11);
+            req = req.version(http::version::Version::HTTP_11);
         } else if v == "HTTP/2.0" {
-            req.version(http::version::Version::HTTP_2);
+            req = req.version(http::version::Version::HTTP_2);
         } else {
             unimplemented!("Unsupport HTTP SERVER_PROTOCOL {:?}", v);
         }
     }
 
-    for key in env_vars.keys().filter(|k| k.starts_with("HTTP_")) {;
+    for key in env_vars.keys().filter(|k| k.starts_with("HTTP_")) {
         let header: String = key.chars().skip(5).map(|c| if c == '_' { '-' } else { c }).collect();
-        req.header(header.as_str(), env_vars[key].as_str().trim());
+        req = req.header(header.as_str(), env_vars[key].as_str().trim());
     }
 
 
-    add_header(&mut req, &env_vars, "AUTH_TYPE", "X-CGI-Auth-Type");
-    add_header(&mut req, &env_vars, "CONTENT_LENGTH", "X-CGI-Content-Length");
-    add_header(&mut req, &env_vars, "CONTENT_TYPE", "X-CGI-Content-Type");
-    add_header(&mut req, &env_vars, "GATEWAY_INTERFACE", "X-CGI-Gateway-Interface");
-    add_header(&mut req, &env_vars, "PATH_INFO", "X-CGI-Path-Info");
-    add_header(&mut req, &env_vars, "PATH_TRANSLATED", "X-CGI-Path-Translated");
-    add_header(&mut req, &env_vars, "QUERY_STRING", "X-CGI-Query-String");
-    add_header(&mut req, &env_vars, "REMOTE_ADDR", "X-CGI-Remote-Addr");
-    add_header(&mut req, &env_vars, "REMOTE_HOST", "X-CGI-Remote-Host");
-    add_header(&mut req, &env_vars, "REMOTE_IDENT", "X-CGI-Remote-Ident");
-    add_header(&mut req, &env_vars, "REMOTE_USER", "X-CGI-Remote-User");
-    add_header(&mut req, &env_vars, "REQUEST_METHOD", "X-CGI-Request-Method");
-    add_header(&mut req, &env_vars, "SCRIPT_NAME", "X-CGI-Script-Name");
-    add_header(&mut req, &env_vars, "SERVER_PORT", "X-CGI-Server-Port");
-    add_header(&mut req, &env_vars, "SERVER_PROTOCOL", "X-CGI-Server-Protocol");
-    add_header(&mut req, &env_vars, "SERVER_SOFTWARE", "X-CGI-Server-Software");
+    req = add_header(req, &env_vars, "AUTH_TYPE", "X-CGI-Auth-Type");
+    req = add_header(req, &env_vars, "CONTENT_LENGTH", "X-CGI-Content-Length");
+    req = add_header(req, &env_vars, "CONTENT_TYPE", "X-CGI-Content-Type");
+    req = add_header(req, &env_vars, "GATEWAY_INTERFACE", "X-CGI-Gateway-Interface");
+    req = add_header(req, &env_vars, "PATH_INFO", "X-CGI-Path-Info");
+    req = add_header(req, &env_vars, "PATH_TRANSLATED", "X-CGI-Path-Translated");
+    req = add_header(req, &env_vars, "QUERY_STRING", "X-CGI-Query-String");
+    req = add_header(req, &env_vars, "REMOTE_ADDR", "X-CGI-Remote-Addr");
+    req = add_header(req, &env_vars, "REMOTE_HOST", "X-CGI-Remote-Host");
+    req = add_header(req, &env_vars, "REMOTE_IDENT", "X-CGI-Remote-Ident");
+    req = add_header(req, &env_vars, "REMOTE_USER", "X-CGI-Remote-User");
+    req = add_header(req, &env_vars, "REQUEST_METHOD", "X-CGI-Request-Method");
+    req = add_header(req, &env_vars, "SCRIPT_NAME", "X-CGI-Script-Name");
+    req = add_header(req, &env_vars, "SERVER_PORT", "X-CGI-Server-Port");
+    req = add_header(req, &env_vars, "SERVER_PROTOCOL", "X-CGI-Server-Protocol");
+    req = add_header(req, &env_vars, "SERVER_SOFTWARE", "X-CGI-Server-Software");
 
     req.body(stdin).unwrap()
     
 }
 
 // add the CGI request meta-variables as X-CGI- headers
-fn add_header(req: &mut http::request::Builder, env_vars: &HashMap<String, String>, meta_var: &str, target_header: &str) {
+fn add_header(req: http::request::Builder, env_vars: &HashMap<String, String>, meta_var: &str, target_header: &str) -> http::request::Builder {
     if let Some(var) = env_vars.get(meta_var) {
-        req.header(target_header, var.as_str());
+        req.header(target_header, var.as_str())
+    } else {
+        req
     }
 }
 
@@ -240,7 +246,7 @@ mod tests {
         assert_eq!(req.body(), &vec![]);
     }
 
-    fn test_serialized_response(resp: &mut http::response::Builder, body: &str, expected_output: &str) {
+    fn test_serialized_response(resp: http::response::Builder, body: &str, expected_output: &str) {
         let resp: Response = resp.body(String::from(body).into_bytes()).unwrap();
         let output = serialize_response(resp);
         let expected_output = String::from(expected_output).into_bytes();
