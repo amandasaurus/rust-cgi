@@ -1,3 +1,7 @@
+== 0.5 (2020-04-11)
+
+ * Upgrade `http` dependency from 0.1 to 0.2
+
 == 0.4 (2020-04-11)
 
  * Add `text_response` for plain text response (v. similar to `string_response`)
