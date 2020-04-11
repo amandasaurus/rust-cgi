@@ -162,7 +162,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
         }
     }
 
-    for key in env_vars.keys().filter(|k| k.starts_with("HTTP_")) {;
+    for key in env_vars.keys().filter(|k| k.starts_with("HTTP_")) {
         let header: String = key.chars().skip(5).map(|c| if c == '_' { '-' } else { c }).collect();
         req.header(header.as_str(), env_vars[key].as_str().trim());
     }
