@@ -1,4 +1,4 @@
-//! Easily create CGI (RFC 3875) programmes in Rust based on [`http`](https://github.com/hyperium/http)
+//! Easily create CGI (RFC 3875) programmes in Rust based on hyper's [`http`](https://github.com/hyperium/http) types.
 //! 
 //! # Installation & Usage
 //! 
@@ -6,34 +6,49 @@
 //! 
 //! ```cargo,ignore
 //! [dependencies]
-//! cgi = "0.1"
+//! cgi = "0.3"
 //! ```
 //! 
-//! In the `main` function, call only `cgi::handle(...)`, with a function that
-//! takes a `cgi::Request` and returns `cgi::Response`.
+//!
+//! Use the [`cgi_main!`](macro.cgi_main.html) macro, with a function that takes a `cgi::Request` and returns a
+//! `cgi::Response`.
 //! 
+//! ```rust
+//! extern crate cgi;
+//! 
+//! cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
+//!      cgi::text_response(200, "Hello World")
+//! } }
+//! ```
+//!
+//! If your function returns a `Result`, you can use [`cgi_try_main!`](macro.cgi_try_main.html):
+//!
+//! ```rust
+//! extern crate cgi;
+//! 
+//! cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
+//!     let greeting = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
+//!
+//!     Ok(cgi::text_response(200, greeting))
+//! } }
+//! ```
+//! 
+//! It will parse & extract the CGI environmental variables, and the HTTP request body to create
+//! `Request<u8>`, call your function to create a response, and convert your `Response` into the
+//! correct format and print to stdout. If this programme is not called as CGI (e.g. missing
+//! required environmental variables), it will panic.
+//!
+//! It is also possible to call the `cgi::handle` function directly inside your `main` function:
+//!
 //! ```rust,ignore
 //! extern crate cgi;
 //! 
 //! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-//!      // ...
+//!      cgi::empty_response(404)
 //! })}
 //! ```
-//! 
-//! [Hello World](https://en.wikipedia.org/wiki/%22Hello,_World!%22_program):
-//! 
-//! ```rust,ignore
-//! extern crate cgi;
-//! 
-//! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-//!     cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
-//! })}
-//! ```
-//! 
-//! It will parse & extract the CGI environmental variables, and HTTP request body
-//! to create `Request`, and convert your `Response` into the correct format and
-//! print to stdout. If this programme is not called as CGI (e.g. missing required
-//! environmental variables), it will panic.
+//!
+//! Several shortcut functions are provided (such as [`html_response`](fn.html_response.html)/[`binary_response`](fn.binary_response.html))
 
 
 use std::io::{Read, Write, stdin};
@@ -47,9 +62,10 @@ pub type Request = http::Request<Vec<u8>>;
 /// A `Vec<u8>` Response from http
 pub type Response = http::Response<Vec<u8>>;
 
-/// Call F as a CGI programme.
+/// Call a function as a CGI programme.
 ///
-/// Parse & extract the CGI environmental variables, and HTTP request body
+/// This should be called from a `main` function.
+/// Parse & extract the CGI environmental variables, and HTTP request body,
 /// to create `Request`, and convert your `Response` into the correct format and
 /// print to stdout. If this programme is not called as CGI (e.g. missing required
 /// environmental variables), it will panic.
@@ -60,7 +76,9 @@ pub fn handle<F>(func: F)
 
     // How many bytes do we have to read for request body
     // A general stdin().read_to_end() can block if the webserver doesn't close things
-    let content_length: usize = env_vars.get("CONTENT_LENGTH").and_then(|cl| cl.parse::<usize>().ok()).unwrap_or(0);
+    let content_length: usize = env_vars.get("CONTENT_LENGTH")
+        .and_then(|cl| cl.parse::<usize>().ok()).unwrap_or(0);
+
     let mut stdin_contents = vec![0; content_length];
     stdin().read_exact(&mut stdin_contents).unwrap();
 
@@ -73,6 +91,65 @@ pub fn handle<F>(func: F)
     std::io::stdout().write_all(&output).unwrap();
 }
 
+#[macro_export]
+/// Create a `main` function for a CGI script
+///
+/// Use the `cgi_main` macro, with a function that takes a `cgi::Request` and returns a
+/// `cgi::Response`.
+/// 
+/// ```rust
+/// extern crate cgi;
+/// 
+/// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
+///     cgi::empty_response(200)
+/// } }
+/// ```
+macro_rules! cgi_main {
+    ( $func:expr ) => {
+        fn main() {
+            cgi::handle( $func );
+        }
+    };
+}
+
+#[macro_export]
+/// Create a CGI main function based on a function which returns a `Result<cgi::Response, _>`
+///
+/// If the inner function returns an `Ok(...)`, that will be unwrapped & returned. If there's an
+/// error, it will be printed (`{:?}`) to stderr (which apache doesn't sent to the client, but
+/// saves to a log file), and an empty `HTTP 500 Server Error` response is sent instead.
+///
+/// # Example
+///
+/// ```rust
+/// extern crate cgi;
+/// 
+/// cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
+///     let f = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
+///
+///     Ok(cgi::text_response(200, f))
+/// } }
+/// ```
+macro_rules! cgi_try_main {
+    ( $func:expr ) => {
+        fn main() {
+            cgi::handle(|request: cgi::Request| {
+                match $func(request) {
+                    Ok(resp) => resp,
+                    Err(err) => {
+                        eprintln!("{:?}", err);
+                        cgi::empty_response(500)
+                    }
+                }
+            })
+        }
+    };
+}
+
+pub fn err_to_500<E>(res: Result<Response, E>) -> Response {
+    res.unwrap_or(empty_response(500))
+}
+
 /// A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);`
 /// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
@@ -82,7 +159,7 @@ pub fn empty_response<T>(status_code: T) -> Response
 }
 
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
-/// `Content-Type` header.
+/// `Content-Type` header (`text/html`)
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
@@ -96,7 +173,7 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
-/// Returns this string as the body
+/// Convert to a string and return that with the status code
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
@@ -110,7 +187,15 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
 }
 
 
-/// Returns a text/plain text response.
+/// Serves this content as `text/plain` text response, with that status code
+///
+/// ```rust,ignore
+/// extern crate cgi;
+/// 
+/// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
+///   cgi::text_response(200, "Hello world");
+/// } }
+/// ```
 pub fn text_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
