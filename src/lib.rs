@@ -53,6 +53,7 @@
 
 use std::io::{Read, Write, stdin};
 use std::collections::HashMap;
+use std::convert::TryFrom;
 
 pub extern crate http;
 
@@ -153,8 +154,8 @@ pub fn err_to_500<E>(res: Result<Response, E>) -> Response {
 /// A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);`
 /// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
-    where http::StatusCode: std::convert::TryFrom<T>,
-          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>
 {
     http::response::Builder::new().status(status_code).body(vec![]).unwrap()
 }
@@ -162,8 +163,8 @@ pub fn empty_response<T>(status_code: T) -> Response
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
 /// `Content-Type` header (`text/html`)
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: std::convert::TryFrom<T>,
-          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
@@ -177,8 +178,8 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
 
 /// Convert to a string and return that with the status code
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: std::convert::TryFrom<T>,
-          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
@@ -200,8 +201,8 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
 /// } }
 /// ```
 pub fn text_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: std::convert::TryFrom<T>,
-          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
@@ -216,8 +217,8 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
 
 /// Sends  `blob` with that status code.
 pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
-    where http::StatusCode: std::convert::TryFrom<T>,
-          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>
 {
     http::response::Builder::new()
         .status(status_code)
