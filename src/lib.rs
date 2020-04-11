@@ -253,7 +253,7 @@ mod tests {
         assert_eq!(req.uri().query(), Some("foo=bar&baz=bop"));
         assert_eq!(req.version(), http::version::Version::HTTP_10);
         assert_eq!(req.headers()[http::header::USER_AGENT], "MyBrowser/1.0");
-        assert_eq!(req.body(), &vec![]);
+        assert_eq!(req.body(), &vec![] as &Vec<u8>);
     }
 
     fn test_serialized_response(resp: &mut http::response::Builder, body: &str, expected_output: &str) {
