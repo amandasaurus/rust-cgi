@@ -200,7 +200,8 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
 /// } }
 /// ```
 pub fn text_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: http::HttpTryFrom<T>,
+    where http::StatusCode: std::convert::TryFrom<T>,
+          <http::StatusCode as std::convert::TryFrom<T>>::Error: Into<http::Error>,
           S: Into<String>
 {
     let body: Vec<u8> = body.into().into_bytes();
