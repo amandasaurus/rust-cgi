@@ -96,7 +96,7 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
         .unwrap()
 }
 
-/// Returns a simple plain text response.
+/// Returns this string as the body
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
     where http::StatusCode: http::HttpTryFrom<T>,
           S: Into<String>
@@ -108,6 +108,22 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
         .body(body)
         .unwrap()
 }
+
+
+/// Returns a text/plain text response.
+pub fn text_response<T, S>(status_code: T, body: S) -> Response
+    where http::StatusCode: http::HttpTryFrom<T>,
+          S: Into<String>
+{
+    let body: Vec<u8> = body.into().into_bytes();
+    http::response::Builder::new()
+        .status(status_code)
+        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(http::header::CONTENT_TYPE, "text/plain")
+        .body(body)
+        .unwrap()
+}
+
 
 /// Sends  `blob` with that status code.
 pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response

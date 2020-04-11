@@ -1,3 +1,7 @@
+== Unreleased
+
+ * Add `text_response` for plain text response (v. similar to `string_response`)
+
 == 0.3.1 (2019-10-05)
 
  * Correctly publish
