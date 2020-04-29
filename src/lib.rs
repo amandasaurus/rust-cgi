@@ -56,9 +56,42 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 
 pub extern crate http;
+pub extern crate multipart;
 
+pub struct Req<T> {
+    head: http::request::Parts,
+    body: T,
+}
 /// A `Vec<u8>` Request from http
-pub type Request = http::Request<Vec<u8>>;
+pub type Request = Req<Vec<u8>>;
+
+impl<'r> multipart::server::HttpRequest for &'r mut Request {
+    type Body = &'r mut dyn Read;
+    
+    fn multipart_boundary(&self) -> Option<&str> {
+        const BOUNDARY: &str = "boundary=";
+
+        let content_type = (self.head.headers.iter().find(|header| header.0.as_str().eq("Content-Type"))).unwrap().1.to_str().unwrap();
+        let start = (content_type.find(BOUNDARY)).unwrap() + BOUNDARY.len();
+        let end = content_type[start..].find(';').map_or(content_type.len(), |end| start + end);
+
+        Some(&content_type[start .. end])
+    }
+
+    fn body(self) -> Self::Body {
+        &mut &self.body[..]
+    }
+}
+
+impl From<http::Request<Vec<u8>>> for Req<Vec<u8>> {
+    fn from(item: http::Request<Vec<u8>>) -> Self {
+        let (parts, body) = item.into_parts();
+        Req {
+            head: parts,
+            body: body.clone().to_owned()
+        }
+    }
+}
 
 /// A `Vec<u8>` Response from http
 pub type Response = http::Response<Vec<u8>>;
@@ -276,7 +309,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     req = add_header(req, &env_vars, "SERVER_PROTOCOL", "X-CGI-Server-Protocol");
     req = add_header(req, &env_vars, "SERVER_SOFTWARE", "X-CGI-Server-Software");
 
-    req.body(stdin).unwrap()
+    Req::from(req.body(stdin).unwrap())
     
 }
 
