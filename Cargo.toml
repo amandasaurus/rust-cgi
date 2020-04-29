@@ -9,3 +9,4 @@ keywords = ["http", "cgi", "web"]
 
 [dependencies]
 http = "0.2"
+multipart = "*"
