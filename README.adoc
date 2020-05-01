@@ -19,19 +19,37 @@ image::https://img.shields.io/crates/l/cgi.svg?style=flat[crates.io released lic
 cgi = "0.3"
 ----
 
-In the `main` function, call only `cgi::handle(...)`, with a function that
-takes a `cgi::Request` and returns `cgi::Response`.
+Use the `cgi_main!` macro, with a function that takes a `cgi::Request` and returns a
+`cgi::Response`.
 
 [code,rust]
 ----
 extern crate cgi;
 
-fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
-    ...
-})}
+cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
+     cgi::text_response(200, "Hello World")
+} }
 ----
 
-link:https://en.wikipedia.org/wiki/%22Hello,_World!%22_program[Hello World]:
+If your function returns a `Result`, you can use `cgi_try_main!`:
+
+[code,rust]
+----
+extern crate cgi;
+
+cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
+    let greeting = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
+
+    Ok(cgi::text_response(200, greeting))
+} }
+----
+
+It will parse & extract the CGI environmental variables, and the HTTP request body to create
+`Request<u8>`, call your function to create a response, and convert your `Response` into the
+correct format and print to stdout. If this programme is not called as CGI (e.g. missing
+required environmental variables), it will panic.
+
+It is also possible to call the `cgi::handle` function directly inside your `main` function:
 
 [code,rust]
 ----
@@ -41,11 +59,6 @@ fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
     cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
 })}
 ----
-
-It will parse & extract the CGI environmental variables, and HTTP request body
-to create `Request`, and convert your `Response` into the correct format and
-print to stdout. If this programme is not called as CGI (e.g. missing required
-environmental variables), it will panic.
 
 == Response Shortcuts
 
