@@ -16,7 +16,7 @@ image::https://img.shields.io/crates/l/cgi.svg?style=flat[crates.io released lic
 [code,toml]
 ----
 [dependencies]
-cgi = "0.3"
+cgi = "0.5"
 ----
 
 Use the `cgi_main!` macro, with a function that takes a `cgi::Request` and returns a
