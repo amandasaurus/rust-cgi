@@ -223,10 +223,23 @@ pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
     http::response::Builder::new()
         .status(status_code)
         .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(http::header::CONTENT_TYPE, "application/octet-stream")
         .body(body)
         .unwrap()
 }
 
+/// Sends  `blob` with that status code.
+pub fn binary_response_with_context_type<T>(status_code: T, body: Vec<u8>, context_type: &str) -> Response
+    where http::StatusCode: TryFrom<T>,
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>
+{
+    http::response::Builder::new()
+        .status(status_code)
+        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(http::header::CONTENT_TYPE, context_type)
+        .body(body)
+        .unwrap()
+}
 
 fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
