@@ -258,9 +258,9 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
 
     req = req.method(env_vars["REQUEST_METHOD"].as_str());
     let uri = if env_vars.get("QUERY_STRING").unwrap_or(&"".to_owned()) != "" {
-        format!("{}?{}", env_vars["SCRIPT_NAME"], env_vars["QUERY_STRING"])
+        format!("{}?{}", env_vars["REQUEST_URI"], env_vars["QUERY_STRING"])
     } else {
-        env_vars["SCRIPT_NAME"].to_owned()
+        env_vars["REQUEST_URI"].to_owned()
     };
     req = req.uri(uri.as_str());
 
@@ -359,7 +359,7 @@ mod tests {
     #[test]
     fn test_parse_request() {
         let env_vars = env(vec![
-           ("REQUEST_METHOD", "GET"), ("SCRIPT_NAME", "/my/path/script"),
+           ("REQUEST_METHOD", "GET"), ("REQUEST_URI", "/my/path/script"),
            ("SERVER_PROTOCOL", "HTTP/1.0"), ("HTTP_USER_AGENT", "MyBrowser/1.0"),
            ("QUERY_STRING", "foo=bar&baz=bop"),
            ]);
