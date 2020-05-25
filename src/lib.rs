@@ -170,7 +170,7 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
     let body: Vec<u8> = body.into().into_bytes();
     http::response::Builder::new()
         .status(status_code)
-        .header(http::header::CONTENT_TYPE, "text/html")
+        .header(http::header::CONTENT_TYPE, "text/html; charset=utf-8")
         .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
         .body(body)
         .unwrap()
@@ -209,7 +209,7 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
     http::response::Builder::new()
         .status(status_code)
         .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
-        .header(http::header::CONTENT_TYPE, "text/plain")
+        .header(http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
         .body(body)
         .unwrap()
 }
@@ -377,6 +377,13 @@ mod tests {
             "<html><body><h1>Hello</h1></body></html>",
             "Status: 200 OK\ncache-control: max-age=3600\ncontent-language: en\ncontent-type: text/html\n\n<html><body><h1>Hello</h1></body></html>"
         );
-
     }
+
+    #[test]
+    fn test_shortcuts1() {
+        assert_eq!(std::str::from_utf8(&serialize_response(html_response(200, "<html><body><h1>Hello World</h1></body></html>"))).unwrap(),
+            "Status: 200 OK\ncontent-length: 46\ncontent-type: text/html; charset=utf-8\n\n<html><body><h1>Hello World</h1></body></html>"
+        );
+    }
+
 }
