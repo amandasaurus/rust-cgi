@@ -377,6 +377,13 @@ mod tests {
             "<html><body><h1>Hello</h1></body></html>",
             "Status: 200 OK\ncache-control: max-age=3600\ncontent-language: en\ncontent-type: text/html\n\n<html><body><h1>Hello</h1></body></html>"
         );
-
     }
+
+    #[test]
+    fn test_shortcuts1() {
+        assert_eq!(std::str::from_utf8(&serialize_response(html_response(200, "<html><body><h1>Hello World</h1></body></html>"))).unwrap(),
+            "Status: 200 OK\ncontent-length: 46\ncontent-type: text/html; charset=utf-8\n\n<html><body><h1>Hello World</h1></body></html>"
+        );
+    }
+
 }
