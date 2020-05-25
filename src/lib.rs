@@ -170,7 +170,7 @@ pub fn html_response<T, S>(status_code: T, body: S) -> Response
     let body: Vec<u8> = body.into().into_bytes();
     http::response::Builder::new()
         .status(status_code)
-        .header(http::header::CONTENT_TYPE, "text/html")
+        .header(http::header::CONTENT_TYPE, "text/html; charset=utf-8")
         .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
         .body(body)
         .unwrap()
@@ -209,7 +209,7 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
     http::response::Builder::new()
         .status(status_code)
         .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
-        .header(http::header::CONTENT_TYPE, "text/plain")
+        .header(http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
         .body(body)
         .unwrap()
 }
