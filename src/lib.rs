@@ -215,16 +215,41 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
 }
 
 
-/// Sends  `blob` with that status code.
-pub fn binary_response<T>(status_code: T, body: Vec<u8>) -> Response
+/// Sends  `blob` with that status code, and optional content type, `None` for no `Content-Type`
+/// header to be set.
+///
+/// No `Content-Type` header:
+///
+/// ```rust,ignore
+/// cgi::binary_response(200, None, vec![1, 2]);
+/// ```
+///
+/// Send an image:
+///
+/// ```rust,ignore
+/// cgi::binary_response(200, "image/png", vec![1, 2]);
+/// ```
+///
+/// Send a generic binary blob:
+///
+/// ```rust,ignore
+/// cgi::binary_response(200, "application/octet-stream", vec![1, 2]);
+/// ```
+pub fn binary_response<'a, T>(status_code: T, content_type: impl Into<Option<&'a str>>, body: Vec<u8>) -> Response
     where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>
+          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
 {
-    http::response::Builder::new()
+    let content_type: Option<&str> = content_type.into();
+
+    let mut response = http::response::Builder::new()
         .status(status_code)
-        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
-        .body(body)
-        .unwrap()
+        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str());
+
+    if let Some(ct)  = content_type {
+        response = response.header(http::header::CONTENT_TYPE, ct);
+    }
+
+    response.body(body).unwrap()
 }
 
 
