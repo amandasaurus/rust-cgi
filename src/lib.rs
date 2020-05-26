@@ -71,7 +71,7 @@ pub type Response = http::Response<Vec<u8>>;
 /// print to stdout. If this programme is not called as CGI (e.g. missing required
 /// environmental variables), it will panic.
 pub fn handle<F>(func: F) 
-    where F: Fn(Request) -> Response
+    where F: FnOnce(Request) -> Response
 {
     let env_vars: HashMap<String, String> = std::env::vars().collect();
 
