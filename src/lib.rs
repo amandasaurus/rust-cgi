@@ -411,4 +411,20 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_shortcuts2() {
+        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, None, vec![65, 66, 67]))).unwrap(),
+            "Status: 200 OK\ncontent-length: 3\n\nABC"
+        );
+
+        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, "application/octet-stream", vec![65, 66, 67]))).unwrap(),
+            "Status: 200 OK\ncontent-length: 3\ncontent-type: application/octet-stream\n\nABC"
+        );
+
+        let ct: String = "image/png".to_string();
+        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, ct.as_str(), vec![65, 66, 67]))).unwrap(),
+            "Status: 200 OK\ncontent-length: 3\ncontent-type: image/png\n\nABC"
+        );
+    }
+
 }
