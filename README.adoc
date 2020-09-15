@@ -83,14 +83,19 @@ response.
 
 = Running locally
 
-Python provides a simple CGI webserver. The binaries must be in a `cgi-bin`
-directory. Run this in your project root directory (i.e. where `Cargo.toml`
-is), and open link:http://localhost:8000/[].
+Python provides a simple CGI webserver you can use to run your scripts. The
+binaries must be in a `cgi-bin` directory, so you'll need to create that
+directory and copy your binary into it. Given a project named `example`, run
+this in your project root directory (i.e. where `Cargo.toml` is):
 
 ----
-ln -s ./target/debug/ ./cgi-bin/
+mkdir cgi-bin
+cargo build
+cp target/debug/example cgi-bin/example
 python3 -m http.server --cgi
 ----
+
+and then open link:http://localhost:8000/cgi-bin/example[].
 
 = See also
 
