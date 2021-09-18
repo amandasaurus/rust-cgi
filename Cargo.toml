@@ -6,6 +6,7 @@ license = "AGPL-3.0"
 repository = "https://github.com/rory/rust-cgi"
 description = "Create CGI programmes"
 keywords = ["http", "cgi", "web"]
+readme = "README.adoc"
 
 [dependencies]
 http = "0.2"
