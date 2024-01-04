@@ -275,7 +275,7 @@ where
 fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
-    req = req.method(env_vars["REQUEST_METHOD"].as_str());
+    req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
     let uri = if env_vars.get("QUERY_STRING").unwrap_or(&"".to_owned()) != "" {
         format!("{}?{}", env_vars["SCRIPT_NAME"], env_vars["QUERY_STRING"])
     } else {
