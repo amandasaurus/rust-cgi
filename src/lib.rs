@@ -272,11 +272,23 @@ where
     response.body(body).unwrap()
 }
 
+fn exe_url() -> String {
+    // maybe use http::uri::Uri instead.
+    // note: the http crate that this outputs to only accepts http/https URLs,
+    // so we're going to leave off the scheme entirely
+    match std::env::current_exe() {
+        Ok(p) => p.to_string_lossy().into_owned(),
+        Err(_) => String::new(),
+    }
+}
+
 fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
-    let mut uri = env_vars["SCRIPT_NAME"].clone();
+    let mut uri = env_vars
+        .get("SCRIPT_NAME")
+        .map_or_else(exe_url, String::clone);
 
     if env_vars.contains_key("QUERY_STRING") {
         uri.push_str("?");
