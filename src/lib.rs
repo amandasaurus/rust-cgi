@@ -276,11 +276,12 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
-    let uri = if env_vars.get("QUERY_STRING").unwrap_or(&"".to_owned()) != "" {
-        format!("{}?{}", env_vars["SCRIPT_NAME"], env_vars["QUERY_STRING"])
-    } else {
-        env_vars["SCRIPT_NAME"].to_owned()
-    };
+    let mut uri = env_vars["SCRIPT_NAME"].clone();
+
+    if env_vars.contains_key("QUERY_STRING") {
+        uri.push_str("?");
+        uri.push_str(&env_vars["QUERY_STRING"]);
+    }
     req = req.uri(uri.as_str());
 
     if let Some(v) = env_vars.get("SERVER_PROTOCOL") {
