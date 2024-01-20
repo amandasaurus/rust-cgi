@@ -6,15 +6,15 @@
 //! 
 //! ```cargo,ignore
 //! [dependencies]
-//! cgi = "0.3"
+//! rust_cgi = "0.3"
 //! ```
 //! 
 //!
-//! Use the [`cgi_main!`](macro.cgi_main.html) macro, with a function that takes a `cgi::Request` and returns a
-//! `cgi::Response`.
+//! Use the [`cgi_main!`](macro.cgi_main.html) macro, with a function that takes a `rust_cgi::Request` and returns a
+//! `rust_cgi::Response`.
 //! 
 //! ```rust
-//! extern crate cgi;
+//! extern crate rust_cgi as cgi;
 //! 
 //! cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 //!      cgi::text_response(200, "Hello World")
@@ -24,7 +24,7 @@
 //! If your function returns a `Result`, you can use [`cgi_try_main!`](macro.cgi_try_main.html):
 //!
 //! ```rust
-//! extern crate cgi;
+//! extern crate rust_cgi as cgi;
 //! 
 //! cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
 //!     let greeting = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
@@ -38,10 +38,10 @@
 //! correct format and print to stdout. If this programme is not called as CGI (e.g. missing
 //! required environmental variables), it will panic.
 //!
-//! It is also possible to call the `cgi::handle` function directly inside your `main` function:
+//! It is also possible to call the `rust_cgi::handle` function directly inside your `main` function:
 //!
 //! ```rust,ignore
-//! extern crate cgi;
+//! extern crate rust_cgi as cgi;
 //! 
 //! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
 //!      cgi::empty_response(404)
@@ -95,11 +95,11 @@ pub fn handle<F>(func: F)
 #[macro_export]
 /// Create a `main` function for a CGI script
 ///
-/// Use the `cgi_main` macro, with a function that takes a `cgi::Request` and returns a
-/// `cgi::Response`.
+/// Use the `cgi_main` macro, with a function that takes a `rust_cgi::Request` and returns a
+/// `rust_cgi::Response`.
 /// 
 /// ```rust
-/// extern crate cgi;
+/// extern crate rust_cgi as cgi;
 /// 
 /// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 ///     cgi::empty_response(200)
@@ -108,13 +108,13 @@ pub fn handle<F>(func: F)
 macro_rules! cgi_main {
     ( $func:expr ) => {
         fn main() {
-            cgi::handle( $func );
+            rust_cgi::handle( $func );
         }
     };
 }
 
 #[macro_export]
-/// Create a CGI main function based on a function which returns a `Result<cgi::Response, _>`
+/// Create a CGI main function based on a function which returns a `Result<rust_cgi::Response, _>`
 ///
 /// If the inner function returns an `Ok(...)`, that will be unwrapped & returned. If there's an
 /// error, it will be printed (`{:?}`) to stderr (which apache doesn't sent to the client, but
@@ -123,7 +123,7 @@ macro_rules! cgi_main {
 /// # Example
 ///
 /// ```rust
-/// extern crate cgi;
+/// extern crate rust_cgi as cgi;
 /// 
 /// cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
 ///     let f = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
@@ -134,12 +134,12 @@ macro_rules! cgi_main {
 macro_rules! cgi_try_main {
     ( $func:expr ) => {
         fn main() {
-            cgi::handle(|request: cgi::Request| {
+            rust_cgi::handle(|request: rust_cgi::Request| {
                 match $func(request) {
                     Ok(resp) => resp,
                     Err(err) => {
                         eprintln!("{:?}", err);
-                        cgi::empty_response(500)
+                        rust_cgi::empty_response(500)
                     }
                 }
             })
@@ -151,7 +151,7 @@ pub fn err_to_500<E>(res: Result<Response, E>) -> Response {
     res.unwrap_or(empty_response(500))
 }
 
-/// A HTTP Reponse with no body and that HTTP status code, e.g. `return cgi::empty_response(404);`
+/// A HTTP Reponse with no body and that HTTP status code, e.g. `return rust_cgi::empty_response(404);`
 /// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
     where http::StatusCode: TryFrom<T>,
@@ -194,7 +194,7 @@ pub fn string_response<T, S>(status_code: T, body: S) -> Response
 /// Serves this content as `text/plain` text response, with that status code
 ///
 /// ```rust,ignore
-/// extern crate cgi;
+/// extern crate rust_cgi as cgi;
 /// 
 /// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 ///   cgi::text_response(200, "Hello world");
@@ -221,19 +221,19 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
 /// No `Content-Type` header:
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, None, vec![1, 2]);
+/// rust_cgi::binary_response(200, None, vec![1, 2]);
 /// ```
 ///
 /// Send an image:
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, "image/png", vec![1, 2]);
+/// rust_cgi::binary_response(200, "image/png", vec![1, 2]);
 /// ```
 ///
 /// Send a generic binary blob:
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, "application/octet-stream", vec![1, 2]);
+/// rust_cgi::binary_response(200, "application/octet-stream", vec![1, 2]);
 /// ```
 pub fn binary_response<'a, T>(status_code: T, content_type: impl Into<Option<&'a str>>, body: Vec<u8>) -> Response
     where http::StatusCode: TryFrom<T>,
