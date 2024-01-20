@@ -2,11 +2,14 @@
 name = "rust-cgi"
 version = "0.6.1"
 authors = ["Amanda McCann <rory@technomancy.org>", "Kartikaya Gupta"]
+edition = "2021"
 license = "AGPL-3.0"
+
+description = "Library to help create CGI programs in Rust"
 repository = "https://github.com/staktrace/rust-cgi"
-description = "Create CGI programmes"
+readme = "README.md"
 keywords = ["http", "cgi", "web"]
-readme = "README.adoc"
+categories = ["web-programming", "network-programming"]
 
 [dependencies]
 http = "1.0.0"
