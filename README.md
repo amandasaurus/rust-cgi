@@ -45,7 +45,8 @@ cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
 It will parse and extract the CGI environmental variables, and the HTTP request body to create
 `Request<u8>`, call your function to create a response, and convert your `Response` into the
 correct format and print to stdout. If this program is not called as CGI (e.g. missing
-required environmental variables), it will panic.
+required environmental variables), it will gracefully fall back to using reasonable values
+(although the values themselves may be subject to change).
 
 It is also possible to call the `rust_cgi::handle` function directly inside your `main` function:
 

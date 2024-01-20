@@ -404,6 +404,17 @@ mod tests {
     }
 
     #[test]
+    fn test_empty() {
+        let env_vars = env(vec![]);
+        let stdin = Vec::new();
+        let req = parse_request(env_vars, stdin);
+        assert_eq!(req.method(), &http::method::Method::GET);
+        // We don't want to assert any particular values for
+        // anything else in the request, but as long as the above
+        // didn't panic we're good.
+    }
+
+    #[test]
     fn test_parse_request() {
         let env_vars = env(vec![
             ("REQUEST_METHOD", "GET"),
