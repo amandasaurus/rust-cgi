@@ -1,3 +1,9 @@
+0.6.2 (2024-01-20)
+------------------
+
+ * Update `http` dependency
+ * Crate metadata/documentation updates
+
 0.6.1 (2024-01-20)
 ------------------
 

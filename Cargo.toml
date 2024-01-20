@@ -1,6 +1,6 @@
 [package]
 name = "rust-cgi"
-version = "0.6.1"
+version = "0.6.2"
 authors = ["Amanda McCann <rory@technomancy.org>", "Kartikaya Gupta"]
 edition = "2021"
 license = "AGPL-3.0"
