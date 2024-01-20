@@ -1,6 +1,2 @@
 /target/
-**/*.rs.bk
 Cargo.lock
-.*.swp
-*.html
-cgi-bin
