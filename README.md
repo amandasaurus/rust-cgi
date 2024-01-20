@@ -99,6 +99,12 @@ python3 -m http.server --cgi
 
 and then open http://localhost:8000/cgi-bin/example.
 
+MSRV policy
+-----------
+
+Currently the minimum supported Rust version (MSRV) is 1.51.0.
+MSRV increases will be kept to a minimum, and will always be accompanied with a minor version bump.
+
 See also
 --------
 
