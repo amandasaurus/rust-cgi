@@ -10,6 +10,7 @@ repository = "https://github.com/staktrace/rust-cgi"
 readme = "README.md"
 keywords = ["http", "cgi", "web"]
 categories = ["web-programming", "network-programming"]
+exclude = [".gitignore", ".github/**"]
 
 [dependencies]
 http = "1.0.0"

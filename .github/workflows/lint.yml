@@ -1,0 +1,19 @@
+name: Lints
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  formatting:
+    name: Check formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get latest stable Rust
+        run: rustup toolchain install stable --profile default
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Check formatting
+        run: cargo fmt -v -- --check
