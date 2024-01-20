@@ -1,3 +1,8 @@
+== 0.6.1 (2024-01-20)
+
+ * Some README updates
+ * Repo forked from amandasaurus/rust-cgi to staktrace/rust-cgi
+
 == 0.6 (2020-05-27)
 
  * Correctly set charset to utf8 for HTML responses (thanks Unrealrussian)

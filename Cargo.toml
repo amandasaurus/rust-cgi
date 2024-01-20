@@ -1,9 +1,9 @@
 [package]
-name = "cgi"
-version = "0.6.1-rc1"
+name = "rust-cgi"
+version = "0.6.1"
 authors = ["Amanda McCann <rory@technomancy.org>"]
 license = "AGPL-3.0"
-repository = "https://github.com/amandasaurus/rust-cgi"
+repository = "https://github.com/staktrace/rust-cgi"
 description = "Create CGI programmes"
 keywords = ["http", "cgi", "web"]
 readme = "README.adoc"
