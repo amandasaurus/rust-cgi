@@ -1,21 +1,21 @@
 //! Easily create CGI (RFC 3875) programmes in Rust based on hyper's [`http`](https://github.com/hyperium/http) types.
-//! 
+//!
 //! # Installation & Usage
-//! 
+//!
 //! `Cargo.toml`:
-//! 
+//!
 //! ```cargo,ignore
 //! [dependencies]
 //! rust_cgi = "0.3"
 //! ```
-//! 
+//!
 //!
 //! Use the [`cgi_main!`](macro.cgi_main.html) macro, with a function that takes a `rust_cgi::Request` and returns a
 //! `rust_cgi::Response`.
-//! 
+//!
 //! ```rust
 //! extern crate rust_cgi as cgi;
-//! 
+//!
 //! cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 //!      cgi::text_response(200, "Hello World")
 //! } }
@@ -25,14 +25,14 @@
 //!
 //! ```rust
 //! extern crate rust_cgi as cgi;
-//! 
+//!
 //! cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
 //!     let greeting = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
 //!
 //!     Ok(cgi::text_response(200, greeting))
 //! } }
 //! ```
-//! 
+//!
 //! It will parse & extract the CGI environmental variables, and the HTTP request body to create
 //! `Request<u8>`, call your function to create a response, and convert your `Response` into the
 //! correct format and print to stdout. If this programme is not called as CGI (e.g. missing
@@ -42,7 +42,7 @@
 //!
 //! ```rust,ignore
 //! extern crate rust_cgi as cgi;
-//! 
+//!
 //! fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
 //!      cgi::empty_response(404)
 //! })}
@@ -50,10 +50,9 @@
 //!
 //! Several shortcut functions are provided (such as [`html_response`](fn.html_response.html)/[`binary_response`](fn.binary_response.html))
 
-
-use std::io::{Read, Write, stdin};
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::io::{stdin, Read, Write};
 
 pub extern crate http;
 
@@ -70,15 +69,18 @@ pub type Response = http::Response<Vec<u8>>;
 /// to create `Request`, and convert your `Response` into the correct format and
 /// print to stdout. If this programme is not called as CGI (e.g. missing required
 /// environmental variables), it will panic.
-pub fn handle<F>(func: F) 
-    where F: FnOnce(Request) -> Response
+pub fn handle<F>(func: F)
+where
+    F: FnOnce(Request) -> Response,
 {
     let env_vars: HashMap<String, String> = std::env::vars().collect();
 
     // How many bytes do we have to read for request body
     // A general stdin().read_to_end() can block if the webserver doesn't close things
-    let content_length: usize = env_vars.get("CONTENT_LENGTH")
-        .and_then(|cl| cl.parse::<usize>().ok()).unwrap_or(0);
+    let content_length: usize = env_vars
+        .get("CONTENT_LENGTH")
+        .and_then(|cl| cl.parse::<usize>().ok())
+        .unwrap_or(0);
 
     let mut stdin_contents = vec![0; content_length];
     stdin().read_exact(&mut stdin_contents).unwrap();
@@ -97,10 +99,10 @@ pub fn handle<F>(func: F)
 ///
 /// Use the `cgi_main` macro, with a function that takes a `rust_cgi::Request` and returns a
 /// `rust_cgi::Response`.
-/// 
+///
 /// ```rust
 /// extern crate rust_cgi as cgi;
-/// 
+///
 /// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 ///     cgi::empty_response(200)
 /// } }
@@ -108,7 +110,7 @@ pub fn handle<F>(func: F)
 macro_rules! cgi_main {
     ( $func:expr ) => {
         fn main() {
-            rust_cgi::handle( $func );
+            rust_cgi::handle($func);
         }
     };
 }
@@ -124,7 +126,7 @@ macro_rules! cgi_main {
 ///
 /// ```rust
 /// extern crate rust_cgi as cgi;
-/// 
+///
 /// cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
 ///     let f = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
 ///
@@ -134,13 +136,11 @@ macro_rules! cgi_main {
 macro_rules! cgi_try_main {
     ( $func:expr ) => {
         fn main() {
-            rust_cgi::handle(|request: rust_cgi::Request| {
-                match $func(request) {
-                    Ok(resp) => resp,
-                    Err(err) => {
-                        eprintln!("{:?}", err);
-                        rust_cgi::empty_response(500)
-                    }
+            rust_cgi::handle(|request: rust_cgi::Request| match $func(request) {
+                Ok(resp) => resp,
+                Err(err) => {
+                    eprintln!("{:?}", err);
+                    rust_cgi::empty_response(500)
                 }
             })
         }
@@ -154,66 +154,80 @@ pub fn err_to_500<E>(res: Result<Response, E>) -> Response {
 /// A HTTP Reponse with no body and that HTTP status code, e.g. `return rust_cgi::empty_response(404);`
 /// to return a [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 pub fn empty_response<T>(status_code: T) -> Response
-    where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
 {
-    http::response::Builder::new().status(status_code).body(vec![]).unwrap()
+    http::response::Builder::new()
+        .status(status_code)
+        .body(vec![])
+        .unwrap()
 }
 
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
 /// `Content-Type` header (`text/html`)
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
-          S: Into<String>
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
+    S: Into<String>,
 {
     let body: Vec<u8> = body.into().into_bytes();
     http::response::Builder::new()
         .status(status_code)
         .header(http::header::CONTENT_TYPE, "text/html; charset=utf-8")
-        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(
+            http::header::CONTENT_LENGTH,
+            format!("{}", body.len()).as_str(),
+        )
         .body(body)
         .unwrap()
 }
 
 /// Convert to a string and return that with the status code
 pub fn string_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
-          S: Into<String>
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
+    S: Into<String>,
 {
     let body: Vec<u8> = body.into().into_bytes();
     http::response::Builder::new()
         .status(status_code)
-        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(
+            http::header::CONTENT_LENGTH,
+            format!("{}", body.len()).as_str(),
+        )
         .body(body)
         .unwrap()
 }
-
 
 /// Serves this content as `text/plain` text response, with that status code
 ///
 /// ```rust,ignore
 /// extern crate rust_cgi as cgi;
-/// 
+///
 /// cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 ///   cgi::text_response(200, "Hello world");
 /// } }
 /// ```
 pub fn text_response<T, S>(status_code: T, body: S) -> Response
-    where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
-          S: Into<String>
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
+    S: Into<String>,
 {
     let body: Vec<u8> = body.into().into_bytes();
     http::response::Builder::new()
         .status(status_code)
-        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str())
+        .header(
+            http::header::CONTENT_LENGTH,
+            format!("{}", body.len()).as_str(),
+        )
         .header(http::header::CONTENT_TYPE, "text/plain; charset=utf-8")
         .body(body)
         .unwrap()
 }
-
 
 /// Sends  `blob` with that status code, and optional content type, `None` for no `Content-Type`
 /// header to be set.
@@ -235,23 +249,28 @@ pub fn text_response<T, S>(status_code: T, body: S) -> Response
 /// ```rust,ignore
 /// rust_cgi::binary_response(200, "application/octet-stream", vec![1, 2]);
 /// ```
-pub fn binary_response<'a, T>(status_code: T, content_type: impl Into<Option<&'a str>>, body: Vec<u8>) -> Response
-    where http::StatusCode: TryFrom<T>,
-          <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
+pub fn binary_response<'a, T>(
+    status_code: T,
+    content_type: impl Into<Option<&'a str>>,
+    body: Vec<u8>,
+) -> Response
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
 {
     let content_type: Option<&str> = content_type.into();
 
-    let mut response = http::response::Builder::new()
-        .status(status_code)
-        .header(http::header::CONTENT_LENGTH, format!("{}", body.len()).as_str());
+    let mut response = http::response::Builder::new().status(status_code).header(
+        http::header::CONTENT_LENGTH,
+        format!("{}", body.len()).as_str(),
+    );
 
-    if let Some(ct)  = content_type {
+    if let Some(ct) = content_type {
         response = response.header(http::header::CONTENT_TYPE, ct);
     }
 
     response.body(body).unwrap()
 }
-
 
 fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
@@ -279,15 +298,23 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     }
 
     for key in env_vars.keys().filter(|k| k.starts_with("HTTP_")) {
-        let header: String = key.chars().skip(5).map(|c| if c == '_' { '-' } else { c }).collect();
+        let header: String = key
+            .chars()
+            .skip(5)
+            .map(|c| if c == '_' { '-' } else { c })
+            .collect();
         req = req.header(header.as_str(), env_vars[key].as_str().trim());
     }
-
 
     req = add_header(req, &env_vars, "AUTH_TYPE", "X-CGI-Auth-Type");
     req = add_header(req, &env_vars, "CONTENT_LENGTH", "X-CGI-Content-Length");
     req = add_header(req, &env_vars, "CONTENT_TYPE", "X-CGI-Content-Type");
-    req = add_header(req, &env_vars, "GATEWAY_INTERFACE", "X-CGI-Gateway-Interface");
+    req = add_header(
+        req,
+        &env_vars,
+        "GATEWAY_INTERFACE",
+        "X-CGI-Gateway-Interface",
+    );
     req = add_header(req, &env_vars, "PATH_INFO", "X-CGI-Path-Info");
     req = add_header(req, &env_vars, "PATH_TRANSLATED", "X-CGI-Path-Translated");
     req = add_header(req, &env_vars, "QUERY_STRING", "X-CGI-Query-String");
@@ -302,11 +329,15 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     req = add_header(req, &env_vars, "SERVER_SOFTWARE", "X-CGI-Server-Software");
 
     req.body(stdin).unwrap()
-    
 }
 
 // add the CGI request meta-variables as X-CGI- headers
-fn add_header(req: http::request::Builder, env_vars: &HashMap<String, String>, meta_var: &str, target_header: &str) -> http::request::Builder {
+fn add_header(
+    req: http::request::Builder,
+    env_vars: &HashMap<String, String>,
+    meta_var: &str,
+    target_header: &str,
+) -> http::request::Builder {
     if let Some(var) = env_vars.get(meta_var) {
         req.header(target_header, var.as_str())
     } else {
@@ -353,16 +384,21 @@ mod tests {
     use super::*;
 
     fn env(input: Vec<(&str, &str)>) -> HashMap<String, String> {
-        input.into_iter().map(|(a, b)| (a.to_owned(), b.to_owned())).collect()
+        input
+            .into_iter()
+            .map(|(a, b)| (a.to_owned(), b.to_owned()))
+            .collect()
     }
 
     #[test]
     fn test_parse_request() {
         let env_vars = env(vec![
-           ("REQUEST_METHOD", "GET"), ("SCRIPT_NAME", "/my/path/script"),
-           ("SERVER_PROTOCOL", "HTTP/1.0"), ("HTTP_USER_AGENT", "MyBrowser/1.0"),
-           ("QUERY_STRING", "foo=bar&baz=bop"),
-           ]);
+            ("REQUEST_METHOD", "GET"),
+            ("SCRIPT_NAME", "/my/path/script"),
+            ("SERVER_PROTOCOL", "HTTP/1.0"),
+            ("HTTP_USER_AGENT", "MyBrowser/1.0"),
+            ("QUERY_STRING", "foo=bar&baz=bop"),
+        ]);
         let stdin = Vec::new();
         let req = parse_request(env_vars, stdin);
         assert_eq!(req.method(), &http::method::Method::GET);
@@ -380,7 +416,11 @@ mod tests {
         let expected_output = String::from(expected_output).into_bytes();
 
         if output != expected_output {
-            println!("output: {}\nexptected: {}", std::str::from_utf8(&output).unwrap(), std::str::from_utf8(&expected_output).unwrap());
+            println!(
+                "output: {}\nexptected: {}",
+                std::str::from_utf8(&output).unwrap(),
+                std::str::from_utf8(&expected_output).unwrap()
+            );
         }
 
         assert_eq!(output, expected_output);
@@ -391,7 +431,7 @@ mod tests {
         test_serialized_response(
             http::Response::builder().status(200),
             "Hello World",
-            "Status: 200 OK\n\nHello World"
+            "Status: 200 OK\n\nHello World",
         );
 
         test_serialized_response(
@@ -413,18 +453,35 @@ mod tests {
 
     #[test]
     fn test_shortcuts2() {
-        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, None, vec![65, 66, 67]))).unwrap(),
+        assert_eq!(
+            std::str::from_utf8(&serialize_response(binary_response(
+                200,
+                None,
+                vec![65, 66, 67]
+            )))
+            .unwrap(),
             "Status: 200 OK\ncontent-length: 3\n\nABC"
         );
 
-        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, "application/octet-stream", vec![65, 66, 67]))).unwrap(),
+        assert_eq!(
+            std::str::from_utf8(&serialize_response(binary_response(
+                200,
+                "application/octet-stream",
+                vec![65, 66, 67]
+            )))
+            .unwrap(),
             "Status: 200 OK\ncontent-length: 3\ncontent-type: application/octet-stream\n\nABC"
         );
 
         let ct: String = "image/png".to_string();
-        assert_eq!(std::str::from_utf8(&serialize_response(binary_response(200, ct.as_str(), vec![65, 66, 67]))).unwrap(),
+        assert_eq!(
+            std::str::from_utf8(&serialize_response(binary_response(
+                200,
+                ct.as_str(),
+                vec![65, 66, 67]
+            )))
+            .unwrap(),
             "Status: 200 OK\ncontent-length: 3\ncontent-type: image/png\n\nABC"
         );
     }
-
 }
