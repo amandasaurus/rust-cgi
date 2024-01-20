@@ -9,4 +9,4 @@ keywords = ["http", "cgi", "web"]
 readme = "README.adoc"
 
 [dependencies]
-http = "0.2"
+http = "1.0.0"
