@@ -53,7 +53,7 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::Debug;
-use std::io::{stdin, Read, Write};
+use std::io::{Read, Write};
 
 pub extern crate http;
 
@@ -63,15 +63,11 @@ pub type Request = http::Request<Vec<u8>>;
 /// A `Vec<u8>` Response from http
 pub type Response = http::Response<Vec<u8>>;
 
-/// Call a function as a CGI programme.
-///
-/// This should be called from a `main` function.
-/// Parse & extract the CGI environmental variables, and HTTP request body,
-/// to create `Request`, and convert your `Response` into the correct format and
-/// print to stdout.
-pub fn handle<F>(func: F)
+fn handle_with_io<F, R, W>(func: F, mut stdin: R, mut stdout: W)
 where
     F: FnOnce(Request) -> Response,
+    R: Read,
+    W: Write,
 {
     let env_vars: HashMap<String, String> = std::env::vars().collect();
 
@@ -83,7 +79,7 @@ where
         .unwrap_or(0);
 
     let mut stdin_contents = vec![0; content_length];
-    stdin().read_exact(&mut stdin_contents).unwrap();
+    stdin.read_exact(&mut stdin_contents).unwrap();
 
     let request = parse_request(env_vars, stdin_contents);
 
@@ -91,7 +87,41 @@ where
 
     let output = serialize_response(response);
 
-    std::io::stdout().write_all(&output).unwrap();
+    stdout.write_all(&output).unwrap();
+}
+
+fn try_handle_with_io<E, F, R, W, X>(func: F, stdin: R, stdout: W, mut stderr: X)
+where
+    E: Debug,
+    F: FnOnce(Request) -> Result<Response, E>,
+    R: Read,
+    W: Write,
+    X: Write,
+{
+    handle_with_io(
+        |request: Request| match func(request) {
+            Ok(resp) => resp,
+            Err(err) => {
+                writeln!(stderr, "{:?}", err).unwrap_or_else(|_| eprintln!("{:?}", err));
+                empty_response(500)
+            }
+        },
+        stdin,
+        stdout,
+    )
+}
+
+/// Call a function as a CGI programme.
+///
+/// This should be called from a `main` function.
+/// Parse & extract the CGI environmental variables, and HTTP request body,
+/// to create `Request`, and convert your `Response` into the correct format and
+/// print to stdout.
+pub fn handle<F>(func: F)
+where
+    F: FnOnce(Request) -> Response,
+{
+    handle_with_io(func, std::io::stdin(), std::io::stdout())
 }
 
 /// Call a function as a CGI programme.
@@ -99,19 +129,12 @@ where
 /// Same as `handle`, but takes a function that returns a `Result`, and
 /// in case of error, it writes the error to stderr, and returns an empty
 /// 500 response.
-pub fn try_handle<F, E : Debug>(func: F)
+pub fn try_handle<E, F>(func: F)
 where
+    E: Debug,
     F: FnOnce(Request) -> Result<Response, E>,
 {
-    handle(|request: Request| {
-        match func(request) {
-            Ok(resp) => resp,
-            Err(err) => {
-                eprintln!("{:?}", err);
-                empty_response(500)
-            }
-        }
-    })
+    try_handle_with_io(func, std::io::stdin(), std::io::stdout(), std::io::stderr())
 }
 
 #[macro_export]
@@ -520,6 +543,48 @@ mod tests {
             )))
             .unwrap(),
             "Status: 200 OK\ncontent-length: 3\ncontent-type: image/png\n\nABC"
+        );
+    }
+
+    #[test]
+    fn test_handle_success() {
+        let input = std::io::Cursor::new(vec![]);
+        let mut output = std::io::BufWriter::new(Vec::new());
+        let mut error = std::io::BufWriter::new(Vec::new());
+
+        try_handle_with_io(
+            |_req: Request| Ok::<http::Response<Vec<u8>>, String>(text_response(200, "All good")),
+            input,
+            &mut output,
+            &mut error,
+        );
+
+        let written = output.into_inner().unwrap();
+        assert_eq!(String::from_utf8(written).unwrap(), "Status: 200 OK\ncontent-length: 8\ncontent-type: text/plain; charset=utf-8\n\nAll good");
+        assert_eq!(error.into_inner().unwrap().len(), 0);
+    }
+
+    #[test]
+    fn test_handle_error() {
+        let input = std::io::Cursor::new(vec![]);
+        let mut output = std::io::BufWriter::new(Vec::new());
+        let mut error = std::io::BufWriter::new(Vec::new());
+
+        try_handle_with_io(
+            |_req: Request| Err("Not good"),
+            input,
+            &mut output,
+            &mut error,
+        );
+
+        let written = output.into_inner().unwrap();
+        assert_eq!(
+            String::from_utf8(written).unwrap(),
+            "Status: 500 Internal Server Error\n\n"
+        );
+        assert_eq!(
+            String::from_utf8(error.into_inner().unwrap()).unwrap(),
+            "\"Not good\"\n"
         );
     }
 }
