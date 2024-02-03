@@ -52,6 +52,7 @@
 
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fmt::Debug;
 use std::io::{stdin, Read, Write};
 
 pub extern crate http;
@@ -91,6 +92,26 @@ where
     let output = serialize_response(response);
 
     std::io::stdout().write_all(&output).unwrap();
+}
+
+/// Call a function as a CGI programme.
+///
+/// Same as `handle`, but takes a function that returns a `Result`, and
+/// in case of error, it writes the error to stderr, and returns an empty
+/// 500 response.
+pub fn try_handle<F, E : Debug>(func: F)
+where
+    F: FnOnce(Request) -> Result<Response, E>,
+{
+    handle(|request: Request| {
+        match func(request) {
+            Ok(resp) => resp,
+            Err(err) => {
+                eprintln!("{:?}", err);
+                empty_response(500)
+            }
+        }
+    })
 }
 
 #[macro_export]
@@ -135,13 +156,7 @@ macro_rules! cgi_main {
 macro_rules! cgi_try_main {
     ( $func:expr ) => {
         fn main() {
-            rust_cgi::handle(|request: rust_cgi::Request| match $func(request) {
-                Ok(resp) => resp,
-                Err(err) => {
-                    eprintln!("{:?}", err);
-                    rust_cgi::empty_response(500)
-                }
-            })
+            rust_cgi::try_handle($func);
         }
     };
 }
