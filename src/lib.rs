@@ -35,10 +35,10 @@
 //!
 //! It will parse & extract the CGI environmental variables, and the HTTP request body to create
 //! `Request<u8>`, call your function to create a response, and convert your `Response` into the
-//! correct format and print to stdout. If this programme is not called as CGI (e.g. missing
-//! required environmental variables), it will panic.
+//! correct format and print to stdout.
 //!
-//! It is also possible to call the `rust_cgi::handle` function directly inside your `main` function:
+//! It is also possible to call the `rust_cgi::handle` ro `rust_cgi::try_handle` function directly
+//! inside your `main` function:
 //!
 //! ```rust,ignore
 //! extern crate rust_cgi as cgi;
@@ -67,8 +67,7 @@ pub type Response = http::Response<Vec<u8>>;
 /// This should be called from a `main` function.
 /// Parse & extract the CGI environmental variables, and HTTP request body,
 /// to create `Request`, and convert your `Response` into the correct format and
-/// print to stdout. If this programme is not called as CGI (e.g. missing required
-/// environmental variables), it will panic.
+/// print to stdout.
 pub fn handle<F>(func: F)
 where
     F: FnOnce(Request) -> Response,
