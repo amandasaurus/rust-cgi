@@ -326,12 +326,14 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
     let mut uri = env_vars
         .get("SCRIPT_NAME")
+        .filter(|val| !val.is_empty())
         .map_or_else(exe_url, String::clone);
 
-    if env_vars.contains_key("QUERY_STRING") {
+    if let Some(query_string) = env_vars.get("QUERY_STRING").filter(|val| !val.is_empty()) {
         uri.push_str("?");
-        uri.push_str(&env_vars["QUERY_STRING"]);
+        uri.push_str(&query_string);
     }
+
     req = req.uri(uri.as_str());
 
     if let Some(v) = env_vars.get("SERVER_PROTOCOL") {
