@@ -1,12 +1,12 @@
-rust-cgi
-========
-[![Crate](https://img.shields.io/crates/v/rust-cgi.svg)](https://crates.io/crates/rust-cgi)
-[![License](https://img.shields.io/crates/l/rust-cgi.svg)](LICENSE)
+cgi
+===
+[![Crate](https://img.shields.io/crates/v/cgi.svg)](https://crates.io/crates/cgi)
+[![License](https://img.shields.io/crates/l/cgi.svg)](LICENSE)
 
 Easily create CGI (Common Gateway Interface) programs in Rust, based on
 [`http`](https://crates.io/crates/http) types.
 
-This repository is a fork of the unmaintained https://github.com/amandasaurus/rust-cgi,
+This repository is a fork of the unmaintained https://github.com/amandasaurus/cgi,
 which was published to crates.io as the `cgi` crate.
 
 Installation & Usage
@@ -16,14 +16,14 @@ Installation & Usage
 
 ```toml
 [dependencies]
-rust-cgi = "0.6"
+cgi = "0.6"
 ```
 
-Use the `cgi_main!` macro, with a function that takes a `rust_cgi::Request` and returns a
-`rust_cgi::Response`.
+Use the `cgi_main!` macro, with a function that takes a `cgi::Request` and returns a
+`cgi::Response`.
 
 ```rust
-extern crate rust_cgi as cgi;
+extern crate cgi;
 
 cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
      cgi::text_response(200, "Hello World")
@@ -33,7 +33,7 @@ cgi::cgi_main! { |request: cgi::Request| -> cgi::Response {
 If your function returns a `Result`, you can use `cgi_try_main!`:
 
 ```rust
-extern crate rust_cgi as cgi;
+extern crate cgi;
 
 cgi::cgi_try_main! { |request: cgi::Request| -> Result<cgi::Response, String> {
     let greeting = std::fs::read_to_string("greeting.txt").map_err(|_| "Couldn't open file")?;
@@ -48,10 +48,10 @@ correct format and print to stdout. If this program is not called as CGI (e.g. m
 required environmental variables), it will gracefully fall back to using reasonable values
 (although the values themselves may be subject to change).
 
-It is also possible to call the `rust_cgi::handle` function directly inside your `main` function:
+It is also possible to call the `cgi::handle` function directly inside your `main` function:
 
 ```rust
-extern crate rust_cgi as cgi;
+extern crate cgi;
 
 fn main() { cgi::handle(|request: cgi::Request| -> cgi::Response {
     cgi::html_response(200, "<html><body><h1>Hello World!</h1></body></html>")
@@ -63,25 +63,25 @@ Response Shortcuts
 
 Several shortcuts create shortcuts easily:
 
-- `rust_cgi:empty_response(status_code)` - A HTTP Reponse with no body and that HTTP
+- `cgi:empty_response(status_code)` - A HTTP Reponse with no body and that HTTP
 status code, e.g. `return rust_igi::empty_response(404);` to return a
 [HTTP 404 Not Found](https://en.wikipedia.org/wiki/HTTP_404).
 
-- `rust_cgi::html_response(status_code, text)` - Converts `text` to bytes (UTF8) and
+- `cgi::html_response(status_code, text)` - Converts `text` to bytes (UTF8) and
 sends that as the body with that `status_code` and HTML `Content-Type` header.
 
-- `rust_cgi::string_response(status_code, text)` - Converts `text` to bytes (UTF8),
+- `cgi::string_response(status_code, text)` - Converts `text` to bytes (UTF8),
 and sends that as the body with that `status_code` but no `Content-Type` header.
 
-- `rust_cgi::binary_response(status_code, content_type, blob)` - Sends `blob` with
+- `cgi::binary_response(status_code, content_type, blob)` - Sends `blob` with
 that status code and the provided content type header.
 
 Re-exports
 ----------
 
-`http` is re-exported, (as `rust_cgi::http`).
+`http` is re-exported, (as `cgi::http`).
 
-`rust_cgi::Response`/`Request` are `http::Response<Vec<u8>>`/`Request<Vec<u8>>`.
+`cgi::Response`/`Request` are `http::Response<Vec<u8>>`/`Request<Vec<u8>>`.
 
 Running locally
 ---------------
@@ -109,7 +109,7 @@ MSRV increases will be kept to a minimum, and will always be accompanied with a 
 See also
 --------
 
-- [Rustdoc for this crate](https://docs.rs/rust-cgi/latest/rust_cgi/)
+- [Rustdoc for this crate](https://docs.rs/cgi/latest/cgi/)
 - [http crate](https://github.com/hyperium/http)
 - [RFC 3875 - The Common Gateway Interface (CGI) v1.1](https://tools.ietf.org/html/rfc3875)
 

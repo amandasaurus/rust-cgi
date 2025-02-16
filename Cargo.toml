@@ -1,12 +1,12 @@
 [package]
-name = "rust-cgi"
+name = "cgi"
 version = "0.7.1"
-authors = ["Amanda McCann <rory@technomancy.org>", "Kartikaya Gupta"]
+authors = ["Amanda McCann <amanda@technomancy.org>", "Kartikaya Gupta"]
 edition = "2021"
 license = "AGPL-3.0"
 
 description = "Library to help create CGI programs in Rust"
-repository = "https://github.com/staktrace/rust-cgi"
+repository = "https://github.com/amandasaurus/rust-cgi"
 readme = "README.md"
 keywords = ["http", "cgi", "web"]
 categories = ["web-programming", "network-programming"]
