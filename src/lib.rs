@@ -330,7 +330,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
 
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
     let mut uri = env_vars
-        .get("SCRIPT_NAME")
+        .get("PATH_INFO")
         .filter(|val| !val.is_empty())
         .map_or_else(exe_url, String::clone);
 
