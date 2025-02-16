@@ -201,6 +201,11 @@ where
         .unwrap()
 }
 
+/// A HTTP Reponse with no body and the 404 HTTP status code
+pub fn empty_404() -> Response {
+    empty_response(404)
+}
+
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
 /// `Content-Type` header (`text/html`)
 pub fn html_response<T, S>(status_code: T, body: S) -> Response
