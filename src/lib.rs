@@ -309,6 +309,7 @@ where
     response.body(body).unwrap()
 }
 
+/// Path of the current programme.
 fn exe_url() -> String {
     // maybe use http::uri::Uri instead.
     // note: the http crate that this outputs to only accepts http/https URLs,
