@@ -6,9 +6,6 @@ cgi
 Easily create CGI (Common Gateway Interface) programs in Rust, based on
 [`http`](https://crates.io/crates/http) types.
 
-This repository is a fork of the unmaintained https://github.com/amandasaurus/cgi,
-which was published to crates.io as the `cgi` crate.
-
 Installation & Usage
 --------------------
 
