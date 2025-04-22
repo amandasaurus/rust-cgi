@@ -365,15 +365,20 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
-    let mut uri = env_vars
-        .get("PATH_INFO")
-        .filter(|val| !val.is_empty())
-        .map_or_else(exe_url, String::clone);
-
-    if let Some(query_string) = env_vars.get("QUERY_STRING").filter(|val| !val.is_empty()) {
-        uri.push_str("?");
-        uri.push_str(&query_string);
-    }
+    let uri = if let Some(request_uri) = env_vars.get("REQUEST_URI") {
+        request_uri.to_owned()
+    } else {
+        let mut uri = env_vars
+            .get("SCRIPT_URI")
+            .or(env_vars.get("PATH_INFO"))
+            .filter(|val| !val.is_empty())
+            .map_or_else(exe_url, String::clone);
+        if let Some(query_string) = env_vars.get("QUERY_STRING").filter(|val| !val.is_empty()) {
+            uri.push('?');
+            uri.push_str(query_string);
+        }
+        uri
+    };
 
     req = req.uri(uri.as_str());
 
@@ -445,10 +450,10 @@ fn serialize_response(response: Response) -> Vec<u8> {
     output.push_str("Status: ");
     output.push_str(response.status().as_str());
     if let Some(reason) = response.status().canonical_reason() {
-        output.push_str(" ");
+        output.push(' ');
         output.push_str(reason);
     }
-    output.push_str("\n");
+    output.push('\n');
 
     {
         let headers = response.headers();
@@ -458,11 +463,11 @@ fn serialize_response(response: Response) -> Vec<u8> {
             output.push_str(key.as_str());
             output.push_str(": ");
             output.push_str(headers.get(key).unwrap().to_str().unwrap());
-            output.push_str("\n");
+            output.push('\n');
         }
     }
 
-    output.push_str("\n");
+    output.push('\n');
 
     let mut output = output.into_bytes();
 
@@ -499,6 +504,7 @@ mod tests {
     fn test_parse_request() {
         let env_vars = env(vec![
             ("REQUEST_METHOD", "GET"),
+            ("REQUEST_URI", "/my/path/script?foo=bar&baz=bop"),
             ("SCRIPT_NAME", "/my/path/script"),
             ("SERVER_PROTOCOL", "HTTP/1.0"),
             ("HTTP_USER_AGENT", "MyBrowser/1.0"),
