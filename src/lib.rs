@@ -184,6 +184,7 @@ macro_rules! cgi_try_main {
     };
 }
 
+/// Convert a Result<Response, E> to a Response, by converting an E to a 500.
 pub fn err_to_500<E>(res: Result<Response, E>) -> Response {
     res.unwrap_or(empty_response(500))
 }
@@ -204,6 +205,41 @@ where
 /// A HTTP Reponse with no body and the 404 HTTP status code
 pub fn empty_404() -> Response {
     empty_response(404)
+}
+
+/// Return a HTTP Redirect (with this redirect code) to this URL.
+pub fn redirect<T>(status_code: T, new_url: impl AsRef<str>) -> Response
+where
+    http::StatusCode: TryFrom<T>,
+    <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
+{
+    let new_url: &str = new_url.as_ref();
+    let mut response = empty_response(status_code);
+    response.headers_mut().insert(
+        http::header::LOCATION,
+        http::header::HeaderValue::from_str(new_url).unwrap(),
+    );
+
+    response
+}
+
+/// Return a HTTP 301 (Permanent) redirect to this URL.
+pub fn redirect_301(new_url: impl AsRef<str>) -> Response {
+    redirect(301, new_url)
+}
+
+/// Return a HTTP 301 (Permanent) redirect to this URL.
+pub fn redirect_permanent(new_url: impl AsRef<str>) -> Response {
+    redirect_301(new_url)
+}
+
+/// Return a HTTP 302 (Temporary) redirect to this URL.
+pub fn redirect_302(new_url: impl AsRef<str>) -> Response {
+    redirect(302, new_url)
+}
+/// Return a HTTP 302 (Temporary) redirect to this URL.
+pub fn redirect_temporary(new_url: impl AsRef<str>) -> Response {
+    redirect_302(new_url)
 }
 
 /// Converts `text` to bytes (UTF8) and sends that as the body with that `status_code` and HTML
