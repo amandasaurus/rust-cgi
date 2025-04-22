@@ -371,8 +371,8 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
         .map_or_else(exe_url, String::clone);
 
     if let Some(query_string) = env_vars.get("QUERY_STRING").filter(|val| !val.is_empty()) {
-        uri.push_str("?");
-        uri.push_str(&query_string);
+        uri.push('?');
+        uri.push_str(query_string);
     }
 
     req = req.uri(uri.as_str());
@@ -445,10 +445,10 @@ fn serialize_response(response: Response) -> Vec<u8> {
     output.push_str("Status: ");
     output.push_str(response.status().as_str());
     if let Some(reason) = response.status().canonical_reason() {
-        output.push_str(" ");
+        output.push(' ');
         output.push_str(reason);
     }
-    output.push_str("\n");
+    output.push('\n');
 
     {
         let headers = response.headers();
@@ -458,11 +458,11 @@ fn serialize_response(response: Response) -> Vec<u8> {
             output.push_str(key.as_str());
             output.push_str(": ");
             output.push_str(headers.get(key).unwrap().to_str().unwrap());
-            output.push_str("\n");
+            output.push('\n');
         }
     }
 
-    output.push_str("\n");
+    output.push('\n');
 
     let mut output = output.into_bytes();
 
