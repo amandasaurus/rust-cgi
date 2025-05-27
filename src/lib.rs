@@ -422,7 +422,11 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     req = add_header(req, &env_vars, "REMOTE_IDENT", "X-CGI-Remote-Ident");
     req = add_header(req, &env_vars, "REMOTE_USER", "X-CGI-Remote-User");
     req = add_header(req, &env_vars, "REQUEST_METHOD", "X-CGI-Request-Method");
+    req = add_header(req, &env_vars, "REQUEST_URI", "X-CGI-Request-URI");
+    req = add_header(req, &env_vars, "REQUEST_URL", "X-CGI-Request-URL");
     req = add_header(req, &env_vars, "SCRIPT_NAME", "X-CGI-Script-Name");
+    req = add_header(req, &env_vars, "SCRIPT_URI", "X-CGI-Script-URI");
+    req = add_header(req, &env_vars, "SCRIPT_URL", "X-CGI-Script-URL");
     req = add_header(req, &env_vars, "SERVER_PORT", "X-CGI-Server-Port");
     req = add_header(req, &env_vars, "SERVER_PROTOCOL", "X-CGI-Server-Protocol");
     req = add_header(req, &env_vars, "SERVER_SOFTWARE", "X-CGI-Server-Software");
