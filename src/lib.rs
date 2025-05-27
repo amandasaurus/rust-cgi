@@ -365,6 +365,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     let mut req = http::Request::builder();
 
     req = req.method(env_vars.get("REQUEST_METHOD").map_or("GET", String::as_str));
+
     let uri = if let Some(request_uri) = env_vars.get("REQUEST_URI") {
         request_uri.to_owned()
     } else {
