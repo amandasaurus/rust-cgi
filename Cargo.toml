@@ -1,6 +1,6 @@
 [package]
 name = "cgi"
-version = "0.7.2"
+version = "0.8.0"
 authors = ["Amanda McCann <amanda@technomancy.org>", "Kartikaya Gupta"]
 edition = "2021"
 license = "AGPL-3.0"
