@@ -307,29 +307,36 @@ where
         .unwrap()
 }
 
-/// Sends  `blob` with that status code, and optional content type, `None` for no `Content-Type`
-/// header to be set.
+/// Sends  `blob` with that status code, and optional content type and content disposition, `None` for no `Content-Type`
+/// and `Content-Disposition` headers to be set.
 ///
-/// No `Content-Type` header:
+/// No `Content-Type` and `Content-Disposition` headers:
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, None, vec![1, 2]);
+/// cgi::binary_response(200, None, None, vec![1, 2]);
 /// ```
 ///
-/// Send an image:
+/// Send an image with no `Content-Disposition` header::
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, "image/png", vec![1, 2]);
+/// cgi::binary_response(200, "image/png", None, vec![1, 2]);
 /// ```
 ///
-/// Send a generic binary blob:
+/// Send a generic binary blob with no `Content-Disposition` headers:
+///
+/// ```rust,ignore 
+/// cgi::binary_response(200, "application/octet-stream", None, vec![1, 2]);
+/// ```
+///
+/// Send a generic binary blob with `Content-Disposition` header:
 ///
 /// ```rust,ignore
-/// cgi::binary_response(200, "application/octet-stream", vec![1, 2]);
+/// cgi::binary_response(200, "application/octet-stream", "attachment; filename=filename.bin", vec![1, 2]);
 /// ```
 pub fn binary_response<'a, T>(
     status_code: T,
     content_type: impl Into<Option<&'a str>>,
+    content_disposition: impl Into<Option<&'a str>>,
     body: Vec<u8>,
 ) -> Response
 where
@@ -337,6 +344,8 @@ where
     <http::StatusCode as TryFrom<T>>::Error: Into<http::Error>,
 {
     let content_type: Option<&str> = content_type.into();
+    
+    let content_disposition: Option<&str> = content_disposition.into();
 
     let mut response = http::response::Builder::new().status(status_code).header(
         http::header::CONTENT_LENGTH,
@@ -345,6 +354,10 @@ where
 
     if let Some(ct) = content_type {
         response = response.header(http::header::CONTENT_TYPE, ct);
+    }
+    
+    if let Some(cd) = content_disposition {
+        response = response.header(http::header::CONTENT_DISPOSITION, cd);
     }
 
     response.body(body).unwrap()
@@ -409,6 +422,7 @@ fn parse_request(env_vars: HashMap<String, String>, stdin: Vec<u8>) -> Request {
     req = add_header(req, &env_vars, "AUTH_TYPE", "X-CGI-Auth-Type");
     req = add_header(req, &env_vars, "CONTENT_LENGTH", "X-CGI-Content-Length");
     req = add_header(req, &env_vars, "CONTENT_TYPE", "X-CGI-Content-Type");
+    req = add_header(req, &env_vars, "CONTENT_DISPOSITION", "X-CGI-Content-Disposition");
     req = add_header(
         req,
         &env_vars,
@@ -573,6 +587,7 @@ mod tests {
             std::str::from_utf8(&serialize_response(binary_response(
                 200,
                 None,
+                None,
                 vec![65, 66, 67]
             )))
             .unwrap(),
@@ -583,6 +598,7 @@ mod tests {
             std::str::from_utf8(&serialize_response(binary_response(
                 200,
                 "application/octet-stream",
+                None,
                 vec![65, 66, 67]
             )))
             .unwrap(),
@@ -594,10 +610,11 @@ mod tests {
             std::str::from_utf8(&serialize_response(binary_response(
                 200,
                 ct.as_str(),
+                "attachment; filename=filename.bin",
                 vec![65, 66, 67]
             )))
             .unwrap(),
-            "Status: 200 OK\ncontent-length: 3\ncontent-type: image/png\n\nABC"
+            "Status: 200 OK\ncontent-disposition: attachment; filename=filename.bin\ncontent-length: 3\ncontent-type: image/png\n\nABC"
         );
     }
 
